@@ -1,0 +1,130 @@
+---
+title: "highlightr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{highlightr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This package is designed to map a group of individuals' notes to the corresponding parent text, based on the frequency with which phrases occur in the individual notes.
+The parent text is highlighted corresponding to this frequency, in order to create a 'heatmap' of popular phrases found in the note sheets.
+
+This example is taken from the initial description of a crime used in a study of jury perception of algorithm use and demonstrative evidence.
+
+The first step is to re-assign names in the notepad text to correspond with the expected format used in `token_comments()` and use the function to tokenize the comments.
+```{r, message=FALSE, warning=FALSE}
+library(highlightr)
+comment_example_rename <- dplyr::rename(comment_example, page_notes=Notes)
+
+toks_comment <- token_comments(comment_example_rename)
+```
+
+The next step is to tokenize the transcript in a similar manner.
+
+```{r, message=FALSE, warning=FALSE}
+transcript_example_rename <- dplyr::rename(transcript_example, text=Text)
+
+toks_transcript <- token_transcript(transcript_example_rename)
+```
+
+After that, a fuzzy collocation is used to match the tokenized notes to the phrases in the tokenized transcript.
+This function first determines the number of times a collocation of length 5 occurs in participant notes.
+Fuzzy (or indirect) matches are then added to the frequency count of the transcript collocation that is the closest match.
+These fuzzy matches are weighted based on the edit distance between the transcript collocation and the indirect phrase:
+$$
+\frac{n}{(d + 0.25)*m}
+$$
+
+Here, $n$ is the frequency of the fuzzy collocation, $d$ is the distance between the fuzzy collocation and the transcript collocation, and $m$ is the number of closest matches for the fuzzy collocation.
+
+```{r, message=FALSE, warning=FALSE}
+collocation_object <- collocate_comments_fuzzy(toks_transcript, toks_comment)
+
+head(collocation_object)
+
+```
+The output assigns the frequency of each collocation to each word that occurs in that collocation.
+For example, the first collocation in the description is "`r collocation_object$collocation[1]`", which occurs with a frequency of `r round(collocation_object$col_1[1], 2)`.
+This is the only collocation in which the first word will appear, so this is the only collocation value provided for the first word.
+The second word, "`r collocation_object$to_merge[2]`" appears in the next collocation as well: `r collocation_object$collocation[2]`, whose frequency is `r round(collocation_object$col_1[2],2)`, and so on for all words in the description.
+
+Next, the `transcript_frequency()` function attaches the collocation counts to the full text of the transcript.
+<!-- This provides additional information about the original formatting of the transcript that is needed when constructing the final object. -->
+The collocation frequencies are averaged per word.
+
+```{r, message=FALSE, warning=FALSE}
+merged_frequency <- transcript_frequency(transcript_example_rename, collocation_object)
+```
+
+The combined document is then fed through ggplot to assign gradient colors based on frequency, and the minimum and maximum values are recorded.
+
+```{r, message=FALSE, warning=FALSE}
+freq_plot <- collocation_plot(merged_frequency)
+```
+
+After colors have been assigned, highlighted text is created based on frequency, as well as a gradient bar indicating the high and low values.
+The left side of each word gradient indicates the frequency of the previous word's averaged collocation frequency, while the right side indicates the current word's averaged collocation frequency.
+
+```{r, message=FALSE, warning=FALSE}
+
+page_highlight <- highlighted_text(freq_plot)
+
+```
+
+`r page_highlight`  
+
+<br>
+  
+To exclude fuzzy matches, the `collocate_comments()` function can be used. Here, the listed frequencies are all whole numbers, because they are counts (without weighting).
+
+```{r, message=FALSE, warning=FALSE}
+collocation_object_nonfuzzy <- collocate_comments(toks_transcript, toks_comment)
+
+head(collocation_object_nonfuzzy)
+
+```
+
+In this case, the highlighting pattern resembles that when the fuzzy matches are included, but the maximum value reached is smaller.
+Note also that the colors used in highlighting can be changed in the "colors" argument of the `collocation_plot` function.
+
+```{r, message=FALSE, warning=FALSE}
+merged_frequency_nonfuzzy <- transcript_frequency(transcript_example_rename, collocation_object_nonfuzzy)
+
+freq_plot_nonfuzzy <- collocation_plot(merged_frequency_nonfuzzy, colors=c("#15bf7e", "#fcc7ed"))
+
+page_highlight_nonfuzzy <- highlighted_text(freq_plot_nonfuzzy)
+```
+
+`r page_highlight_nonfuzzy`
+
+<br>
+
+Additionally, the length of the collocation can be changed.
+The default collocation length (shown above) is 5 words.
+Below, this collocation length has been changed to 2 words.
+
+```{r, message=FALSE, warning=FALSE}
+collocation_object_2col <- collocate_comments(toks_transcript, toks_comment, collocate_length = 2)
+
+head(collocation_object_2col, n=7)
+
+```
+In these shorter collocations, we can see that the collocation containing the name "Richard Cole" is popular, with a frequency of 87.
+
+```{r, message=FALSE, warning=FALSE}
+merged_frequency_2col <- transcript_frequency(transcript_example_rename, collocation_object_2col)
+
+freq_plot_2col <- collocation_plot(merged_frequency_2col)
+
+page_highlight_2col <- highlighted_text(freq_plot_2col)
+```
+
+`r page_highlight_2col`
