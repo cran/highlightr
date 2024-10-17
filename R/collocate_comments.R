@@ -12,7 +12,7 @@
 #' @export
 #'
 #' @examples comment_example_rename <- dplyr::rename(comment_example, page_notes=Notes)
-#' toks_comment <- token_comments(comment_example_rename)
+#' toks_comment <- token_comments(comment_example_rename[1:100,])
 #' transcript_example_rename <- dplyr::rename(transcript_example, text=Text)
 #' toks_transcript <- token_transcript(transcript_example_rename)
 #' collocation_object <- collocate_comments(toks_transcript, toks_comment)
@@ -64,7 +64,7 @@ collocate_comments <- function(transcript_token, note_token, collocate_length=5)
 
   for (i in 2:collocate_length){
     descript_tomerge[dim(descript_tomerge)[1]-(collocate_length-i),]$to_merge <-
-      stringr::word(descript_tomerge[dim(descript_tomerge)[1]-4,]$collocation, i)
+      stringr::word(descript_tomerge[dim(descript_tomerge)[1]-(collocate_length-1),]$collocation, i)
   }
 
   return(descript_tomerge)

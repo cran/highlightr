@@ -43,7 +43,7 @@ knitr::opts_chunk$set(
 #      filter(type == "p") %>%
 #      mutate(text = map_chr(node, html_text)) %>%
 #      mutate(cleantext = str_remove_all(text, "\\[.*?\\]") %>% str_trim()) %>%
-#      plyr::summarise(cleantext = paste(cleantext, collapse = "\n"))
+#      plyr::summarise(cleantext = paste(cleantext, collapse = "<br> "))
 #  
 #    wiki_pages$page_notes[i] <- wiki_list$cleantext[1]
 #  

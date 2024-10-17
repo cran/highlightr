@@ -18,6 +18,12 @@ token_comments <- function(comment_document){
                            text=tolower(comment_document$page_notes)) #lowercasing text
 
   comment_df <- purrr::map_df(comment_df, ~ gsub("<.*?>", " ", .x))
+  comment_df <- purrr::map_df(comment_df, ~ gsub("\\$", " ", .x))
+  comment_df <- purrr::map_df(comment_df, ~stringi::stri_trans_general(.x, "latin-ascii"))
+  comment_df <- purrr::map_df(comment_df, ~ gsub("-", " ", .x)) #removing dash with space
+  comment_df <- purrr::map_df(comment_df, ~ gsub(":", "", .x)) #removing colon without space
+  comment_df <- purrr::map_df(comment_df, ~ gsub("([[:alnum:]])(\\.)([[:alnum:]])","\\1\\3", .x)) #removing period between characters
+  comment_df <- purrr::map_df(comment_df, ~ gsub("([[:alnum:]])(,)([[:alnum:]])","\\1\\3", .x)) #removing comma between characters
 
   corpus_doc <- quanteda::corpus(comment_df)
 
