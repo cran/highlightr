@@ -1,6 +1,6 @@
 Package: highlightr
 Title: Highlight Conserved Edits Across Versions of a Document
-Version: 1.0.2
+Version: 1.1.2
 Authors@R: 
     c(person("Center for Statistics and Applications in Forensic Evidence", role=c("aut", "cph", "fnd")),
     person("Rachel", "Rogers", , "rrogers.rpackages@gmail.com", role = c("aut", "cre"),
@@ -14,9 +14,9 @@ Description: Input multiple versions of a source document,
     Rogers (2024) <https://digitalcommons.unl.edu/dissertations/AAI31240449/>.
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.3.1
-Imports: dplyr, fuzzyjoin, ggplot2, magrittr, purrr, quanteda,
-        quanteda.textstats, stringi, stringr, tibble, tidyr, tm
+RoxygenNote: 7.3.2
+Imports: dplyr, ggplot2, magrittr, purrr, quanteda, quanteda.textstats,
+        stringi, stringr, tibble, tidyr, tm, zoomerjoin
 Depends: R (>= 2.10)
 LazyData: true
 URL: https://rachelesrogers.github.io/highlightr/,
@@ -26,11 +26,12 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 BugReports: https://github.com/rachelesrogers/highlightr/issues
 NeedsCompilation: no
-Packaged: 2024-10-17 17:54:58 UTC; rrogers9
+Packaged: 2025-06-26 23:34:56 UTC; 165086
 Author: Center for Statistics and Applications in Forensic Evidence [aut, cph,
     fnd],
-  Rachel Rogers [aut, cre] (<https://orcid.org/0000-0002-4145-9630>),
-  Susan VanderPlas [aut] (<https://orcid.org/0000-0002-3803-0972>)
+  Rachel Rogers [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-4145-9630>),
+  Susan VanderPlas [aut] (ORCID: <https://orcid.org/0000-0002-3803-0972>)
 Maintainer: Rachel Rogers <rrogers.rpackages@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-10-17 18:10:02 UTC
+Date/Publication: 2025-06-26 23:50:02 UTC

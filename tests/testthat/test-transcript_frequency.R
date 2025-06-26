@@ -1,3 +1,6 @@
+testthat::skip_on_cran()
+Sys.setenv("OMP_THREAD_LIMIT" = 1)
+
 test_that("size 2 collocation works", {
   transcript_test <- data.frame(text="This is a test.")
   collocation_test <- data.frame(word_number=1:4, col_1=c(2,4,6, NA), col_2=c(NA, 2, 4, 6),
@@ -89,7 +92,7 @@ test_that("dashes are used correctly for merging",{
                                   in the year 1892-1777 dash-name did this")
   transcript_example_rename <- dplyr::rename(dash_transcript, text=Text)
   toks_transcript <- token_transcript(transcript_example_rename)
-  collocation_object <- collocate_comments_fuzzy(toks_transcript, toks_comment, collocate_length = 2)
+  collocation_object <- collocate_comments_fuzzy(toks_transcript, toks_comment, n_bands=5000, threshold=0.4, collocate_length=2)
   frequency_test <- transcript_frequency(transcript_example_rename, collocation_object)
 
   expect_identical(frequency_test$to_merge, c("in","an","example","","here","is","a","dash","space","in",

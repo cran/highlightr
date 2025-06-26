@@ -7,17 +7,19 @@
 #' from [token_transcript()]
 #' @param note_token tokenized document of notes, resulting from [token_comments()]
 #' @param collocate_length the length of the collocation. Default is 5
+#' @param n_bands number of bands used in MinHash algorithm passed to `zoomerjoin::jaccard_right_join()`. Default is 50
+#' @param threshold considered a match in for Jaccard distance passed to `zoomerjoin::jaccard_right_join()`. Default is 0.7
 #'
 #' @return data frame of the transcript and corresponding note frequency
 #' @export
 #'
-#' @examples comment_example_rename <- dplyr::rename(comment_example, page_notes=Notes)
+#' @examples comment_example_rename <- dplyr::rename(comment_example[1:10,], page_notes=Notes)
 #' toks_comment <- token_comments(comment_example_rename)
 #' transcript_example_rename <- dplyr::rename(transcript_example, text=Text)
 #' toks_transcript <- token_transcript(transcript_example_rename)
-#' collocation_object <- collocate_comments_fuzzy(toks_transcript, toks_comment)
+#' fuzzy_object <- collocate_comments_fuzzy(toks_transcript, toks_comment)
 
-collocate_comments_fuzzy <- function(transcript_token, note_token, collocate_length=5){
+collocate_comments_fuzzy <- function(transcript_token, note_token, collocate_length=5, n_bands=50, threshold=0.7){
   collocation.y <- dist <- collocation.x <- weighted_count <- col_number <- word_number <-
     word_1 <- first_word <- collocation <- NULL
   `%>%` <- magrittr::`%>%`
@@ -48,22 +50,20 @@ collocate_comments_fuzzy <- function(transcript_token, note_token, collocate_len
   # Finding collocations that do not directly match the transcript
   mismatches <- dplyr::anti_join(col_descript, descript_ngram_df)
 
-  fuzzy_matches <- fuzzyjoin::stringdist_join(descript_ngram_df, mismatches,
-                                  by='collocation', #match based on collocation
-                                  mode='right', #use right join
-                                  method = "lv", #use levenshtein distance metric
-                                  max_dist=99,
-                                  distance_col='dist')%>%
+  fuzzy_matches <- zoomerjoin::jaccard_right_join(descript_ngram_df, mismatches,
+                                                  by='collocation', similarity_column="dist", n_bands=n_bands, threshold=threshold)%>%
+    dplyr::filter(!is.na(collocation.x)) %>%
     dplyr::group_by(collocation.y) %>%
-    dplyr::slice_min(order_by=dist, n=1) #finding the closest match
+    dplyr::slice_max(order_by=dist, n=1) #finding closest match based on Jaccard Distance
   #counting the number of closest matches per collocation
+  if (dim(fuzzy_matches)[1] != 0){
   close_freq<-as.data.frame(table(fuzzy_matches$collocation.y))
   close_freq <- close_freq %>% dplyr::rename("collocation.y"="Var1", "close_freq"="Freq")
 
   fuzzy_matches <- dplyr::left_join(fuzzy_matches, close_freq)
 
   #Fuzzy matches weight
-  fuzzy_matches$weighted_count <- fuzzy_matches$count/((fuzzy_matches$dist+0.25)*fuzzy_matches$close_freq)
+  fuzzy_matches$weighted_count <- (fuzzy_matches$count*fuzzy_matches$dist)/(fuzzy_matches$close_freq)
 
   #Counting up the number of fuzzy matches per transcript collocation
   fuzzy_col <-fuzzy_matches %>% dplyr::group_by(collocation.x) %>%
@@ -72,6 +72,11 @@ collocate_comments_fuzzy <- function(transcript_token, note_token, collocate_len
   fuzzy_col <- fuzzy_col %>% dplyr::rename("collocation"="collocation.x")
 
   col_merged_fuzzy <- dplyr::left_join(col_merged_descript, fuzzy_col)
+  } else{
+    col_merged_fuzzy <- col_merged_descript
+    col_merged_fuzzy$fuzzy_count <- NA
+
+  }
   col_merged_fuzzy$fuzzy_count <- replace(col_merged_fuzzy$fuzzy_count, is.na(col_merged_fuzzy$fuzzy_count),0)
   #Counting up fuzzy and non-fuzzy matches
   col_merged_fuzzy$final_count <- col_merged_fuzzy$count+col_merged_fuzzy$fuzzy_count
